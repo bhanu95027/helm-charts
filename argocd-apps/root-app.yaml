@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+  # Finalizer ensures that deleting this root app safely cleans up all deployed resources
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/bhanu95027/helm-charts.git'
+    targetRevision: HEAD
+    path: my-app # Points directly to your application Helm chart directory
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: 'https://kubernetes.default.svc' # Internal EKS API server address
+    namespace: dev # Namespace where your application pods will run
+  syncPolicy:
+    automated:
+      prune: true     # Automatically deletes resources in EKS if removed from Git
+      selfHeal: true  # Reverts manual changes made directly in cluster back to Git state
+    syncOptions:
+      - CreateNamespace=true # Creates the 'dev' namespace automatically if it doesn't exist
